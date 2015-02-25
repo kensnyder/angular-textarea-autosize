@@ -1,5 +1,5 @@
 /*!
- * jQuery autosize v1.0.0
+ * jQuery autosize v1.1.0
  * (c) 2015 Ken Snyder
  * MIT License
  * 
@@ -28,24 +28,36 @@
 			this.adjust();
 		},
 		setup: function() {
-			if (
-				this.$textarea.css('box-sizing') == 'border-box' ||
-				this.$textarea.css('-webkit-box-sizing') == 'border-box' ||
-				this.$textarea.css('-moz-box-sizing') == 'border-box'
-			) {
-				// border-box box sizing already includes padding
-				this.verticalPadding = 0;
-			}
-			else {
-				// other box sizing do not so calculate vertical padding here
-				this.verticalPadding = parseInt(this.$textarea.css('padding-top') || 0, 10) 
-					+ parseInt(this.$textarea.css('padding-bottom') || 0, 10);
-			}
 			// just in case we are splitting pixels, 
 			// we would rather see descending letters get cut off
 			// than have the scrollbar display and mess up our calculations
-			this.textarea.style.overflow = 'hidden';
-			this.lineHeight = $(this.textarea).css('line-height');
+			this.$textarea.css({
+				overflow: 'hidden',
+				resize: 'none'
+			});
+			// note that $css values can be fractional
+			this.lineHeight = parseFloat(this.$textarea.css('line-height'));
+			this.calculatedPadding = 
+				parseInt(this.$textarea.css('padding-top') || 0, 10) 
+				+ parseInt(this.$textarea.css('padding-bottom') || 0, 10)
+			;
+			this.isBorderBox = (
+				this.$textarea.css('box-sizing') == 'border-box' ||
+				this.$textarea.css('-webkit-box-sizing') == 'border-box' ||
+				this.$textarea.css('-moz-box-sizing') == 'border-box'
+			);
+			this.verticalPadding = (this.isBorderBox ? 0 : Math.ceil(this.calculatedPadding));
+			if (this.options.minHeight > 0) {
+				this.minHeight = this.options.minHeight;
+			}
+			else if (this.options.minRows > 0) {
+				this.minHeight = this.options.minRows * this.lineHeight + (this.isBorderBox ? this.calculatedPadding : 0);
+			}
+			else {
+				this.minHeight = this.verticalPadding + this.lineHeight;
+			}
+			// round up any fractional parts
+			this.minHeight = Math.ceil(this.minHeight);
 		},
 		observe: function() {
 			var events = 'input.autosize';
@@ -69,18 +81,15 @@
 			// ensure that content can't fit so scrollHeight will be correct
 			this.textarea.style.height = '0';
 			// set height that is just tall enough
-			// add one pixel in case the scrollHeight was rounded down
-			var requiredHeight = this.textarea.scrollHeight - this.verticalPadding + 1;
-			if (requiredHeight < 10) {
-				requiredHeight = this.options.minHeight || this.lineHeight;
-			}
-			this.textarea.style.height = requiredHeight + 'px';
+			// noe that scrollHeight is always an integer
+			var newHeight = Math.max(this.minHeight, this.textarea.scrollHeight - this.verticalPadding);
+			this.textarea.style.height = newHeight + 'px';
 			// put the window scroll position back
 			// since setting height to 0 may cause window scroll to change
 			$window.scrollTop(currentWindowScroll);
 			// trigger resize callback if height has changed
-			if (this.options.onresize && heightBefore != this.textarea.style.height) {
-				this.options.onresize.call( this, parseFloat(heightBefore), parseFloat(this.textarea.style.height) );
+			if (this.options.onresize && heightBefore != newHeight) {
+				this.options.onresize.call( this, parseFloat(heightBefore), newHeight );
 			}
 		}
 	};

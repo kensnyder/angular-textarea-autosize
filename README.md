@@ -1,6 +1,8 @@
 jQuery Autosize
 =
 
+v1.1.0 February 2015
+
 Created because other libraries didn't calculate very well for me.
 
 This plugin uses the scrollHeight of the textarea to determine the needed height instead of using a ghost element.
@@ -11,13 +13,16 @@ $('textarea').autosize({
 	onresize: function() {
 		// optional; fired when size changes
 	},
-	minHeight: 30 // optional; minimum height in pixels; defaults to the line height
+	// optional minimum sizing options:
+	// defaults to the line height + effective padding
+	minRows: 3,   // minimum height in number of rows
+	minHeight: 30 // minimum height in pixels
 });
 ```
 
 Limitations:
-1. If the textarea gets wider, you'll have to call `.autosize()` again (e.g. if a textarea has a percent-width based on the window and the window is resized)
-2. If you have placeholder text that wraps to a new line, you'll need to manually set minHeight
+1. If the textarea changes width, box model or line height, you'll have to call `.autosize()` again (e.g. if a textarea has a percent-width based on the window and the window is resized)
+2. If you have placeholder text that wraps to a new line, you'll need to manually set minRows to 2
 
 Note:
 1. Calling `.autosize()` removes all handlers, reinitializes and performs initial resizing; multiple calls to `.autosize()` is ok.
