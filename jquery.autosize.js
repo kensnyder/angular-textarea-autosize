@@ -1,5 +1,5 @@
 /*!
- * jQuery autosize v1.1.0
+ * jQuery autosize v1.1.1
  * (c) 2015 Ken Snyder
  * MIT License
  * 
@@ -36,7 +36,14 @@
 				resize: 'none'
 			});
 			// note that $css values can be fractional
-			this.lineHeight = parseFloat(this.$textarea.css('line-height'));
+			var lineHeight = this.$textarea.css('line-height');
+			if (lineHeight == 'normal') {
+				lineHeight = (parseFloat(this.$textarea.css('font-size')) || 16) * 1.14;
+			}
+			else {
+				lineHeight = parseFloat(lineHeight);
+			}
+			this.lineHeight = lineHeight;
 			this.calculatedPadding = 
 				parseInt(this.$textarea.css('padding-top') || 0, 10) 
 				+ parseInt(this.$textarea.css('padding-bottom') || 0, 10)
