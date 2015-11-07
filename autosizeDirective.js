@@ -57,11 +57,16 @@
 		};
 	}]);
 
-	function debounce(ms, fn) {
-		var handle;
+	function throttle(ms, fn) {
+		var inprogress = false;
 		return function() {
-			clearTimeout(handle);
-			handle = setTimeout(fn, ms);
+			if (!inprogress) {
+				fn();
+			}
+			inprogress = true;
+			setTimeout(function() {
+				inprogress = false;
+			}, ms);
 		};
 	}	
 
@@ -82,32 +87,48 @@
 			// just in case we are splitting pixels, 
 			// we would rather see descending letters get cut off
 			// than have the scrollbar display and mess up our calculations
-			this.$textarea.css({
-				overflow: 'hidden',
-				resize: 'none'
-			});
-			// get effective property values
+			this.textarea.style.overflow = 'hidden';
+			this.textarea.style.resize = 'none';
+			// get effective property values for height
 			var style = this.$window.getComputedStyle(this.textarea, null);
 			// note that css values can be fractional
-			var lineHeight = style.getPropertyValue('line-height');
-			if (lineHeight == 'normal') {
-				lineHeight = (parseFloat(style.getPropertyValue('font-size')) || 16) * 1.14;
+			this.lineHeight = style.getPropertyValue('line-height');
+			// line height will be returned in px or with keyword "normal" which is about 1.14 * font-size
+			if (this.lineHeight == 'normal') {
+				this.lineHeight = (parseFloat(style.getPropertyValue('font-size')) || 16) * 1.14;
 			}
 			else {
-				lineHeight = parseFloat(lineHeight);
+				this.lineHeight = parseFloat(this.lineHeight);
 			}
-			this.lineHeight = lineHeight;
-			this.calculatedPadding = 
-				parseFloat(style.getPropertyValue('padding-top') || 0) 
-				+ parseFloat(style.getPropertyValue('padding-bottom') || 0)
+			this.paddingHeight = 
+				parseFloat(style.getPropertyValue('padding-top') || 0) || 0
+				+ parseFloat(style.getPropertyValue('padding-bottom') || 0) || 0
 			;
-			this.isBorderBox = (
-				style.getPropertyValue('box-sizing') == 'border-box' ||
-				style.getPropertyValue('-webkit-box-sizing') == 'border-box' ||
-				style.getPropertyValue('-moz-box-sizing') == 'border-box'
+			// border thickness can be a number value or one of "thin, medium thick."
+			// regardless of the keyword or units, px values are returned by all browsers
+			// http://codepen.io/kendsnyder/pen/vOKRwZ
+			this.borderHeight = 
+				parseFloat(style.getPropertyValue('border-top-width') || 0) || 0
+				+ parseFloat(style.getPropertyValue('border-bottom-width') || 0) || 0
+			;
+			this.boxSizing = (
+				style.getPropertyValue('box-sizing') ||
+				style.getPropertyValue('-webkit-box-sizing') ||
+				style.getPropertyValue('-moz-box-sizing') ||
+				'content-box'
 			);
-			this.verticalPadding = (this.isBorderBox ? 0 : Math.ceil(this.calculatedPadding));
-			this.minHeight = Math.ceil((this.$scope.options.minRows || parseFloat(this.attrs.rows) || 1) * this.lineHeight + (this.isBorderBox ? this.calculatedPadding : 0));
+			this.extraHeight = 0;
+			if (this.boxSizing == 'border-box' || this.boxSizing == 'padding-box') {
+				this.extraHeight += this.paddingHeight;
+			}
+			if (this.boxSizing == 'border-box') {
+				this.extraHeight += this.borderHeight;
+			}
+			this.minHeight = Math.ceil(
+				(this.$scope.options.minRows || parseFloat(this.attrs.rows) || 1) 
+				* this.lineHeight 
+				+ this.extraHeight
+			);
 		},
 		observe: function() {
 			var events = 'input';
@@ -117,9 +138,9 @@
 				events += ' keyup';
 			}
 			// Listen for both keyboard events and view changes
-			// but use debounce to avoid calling both in the same event loop.
+			// but use throttle to avoid calling both in the same event loop.
 			var self = this;
-			var adjust = debounce(0, function() {
+			var adjust = throttle(0, function() {
 				self.adjust();
 			});
 			this.$textarea.on(events, adjust);
@@ -137,7 +158,7 @@
 			this.textarea.style.height = '0';
 			// set height that is just tall enough
 			// note that scrollHeight is always an integer
-			var newHeight = Math.max(this.minHeight, this.textarea.scrollHeight - this.verticalPadding);
+			var newHeight = Math.max(this.minHeight, this.textarea.scrollHeight);
 			this.textarea.style.height = newHeight + 'px';
 			// put the window scroll position back
 			// since setting height to 0 may cause window scroll to change
