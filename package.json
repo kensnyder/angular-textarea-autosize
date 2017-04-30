@@ -1,6 +1,6 @@
 {
   "name": "angular-textarea-autosize",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Angular directive to automatically resize a textarea's height as the user types",
   "main": "autosizeDirective.js",
   "scripts": {
