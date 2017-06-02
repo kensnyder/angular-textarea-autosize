@@ -1,0 +1,25 @@
+{
+  "name": "angular-textarea-autosize",
+  "description": "Angular directive to automatically resize a textarea's height as the user types",
+  "main": "autosizeDirective.js",
+  "authors": [
+    "Ken Snyder"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "angular",
+    "textarea",
+    "autosize",
+    "resize",
+    "autoresize",
+    "height"
+  ],
+  "homepage": "https://github.com/kensnyder/angular-textarea-autosize",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
